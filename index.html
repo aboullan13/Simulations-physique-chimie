@@ -1,0 +1,96 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Simulateur de titrage acido-basique</title>
+<style>
+:root{color-scheme:light;--ink:#17243a;--muted:#64748b;--line:#dbe3ee;--blue:#2563eb;--teal:#0f766e;--paper:#f5f8fc}
+*{box-sizing:border-box}body{margin:0;background:var(--paper);color:var(--ink);font:16px/1.5 system-ui,-apple-system,Segoe UI,Roboto,sans-serif}
+header{background:linear-gradient(120deg,#102a56,#2459a6);color:white;padding:28px 20px}header .wrap,main{max-width:1100px;margin:auto}h1{margin:0 0 6px;font-size:clamp(1.5rem,4vw,2.2rem)}header p{margin:0;color:#dbeafe}
+main{padding:22px 16px 40px}.layout{display:grid;grid-template-columns:330px 1fr;gap:18px}.panel{background:white;border:1px solid var(--line);border-radius:16px;padding:18px;box-shadow:0 5px 20px #1e3a5f0a}
+h2{font-size:1.15rem;margin:0 0 14px}.control{margin:16px 0}.control label{display:flex;justify-content:space-between;gap:12px;font-weight:600}.control output{color:var(--blue);font-variant-numeric:tabular-nums}input[type=range]{width:100%;accent-color:var(--blue);margin:10px 0 0}
+.hint{color:var(--muted);font-size:.86rem}.metrics{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:14px}.metric{background:#f1f6ff;border-radius:12px;padding:12px}.metric small{display:block;color:var(--muted)}.metric strong{font-size:1.35rem;font-variant-numeric:tabular-nums}
+.chart-wrap{position:relative}canvas{display:block;width:100%;height:340px}.axis-note{display:flex;justify-content:space-between;color:var(--muted);font-size:.8rem}
+.species{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:14px}.species div{padding:12px;border:1px solid var(--line);border-radius:12px}.bar{height:10px;background:#e8eef7;border-radius:20px;overflow:hidden;margin-top:8px}.bar span{display:block;height:100%;background:var(--teal);width:50%}
+.actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:14px}button{border:0;border-radius:10px;padding:10px 14px;background:var(--blue);color:white;font-weight:650;cursor:pointer}button.secondary{background:#e9eff8;color:var(--ink)}
+.note{margin-top:18px;padding:14px;border-left:4px solid var(--teal);background:#f0fdfa;border-radius:8px;font-size:.92rem}.equation{font-family:ui-serif,Georgia,serif;font-size:1.05rem}
+@media(max-width:780px){.layout{grid-template-columns:1fr}.metrics{grid-template-columns:repeat(3,1fr)}canvas{height:290px}}@media(max-width:430px){.metrics{grid-template-columns:1fr 1fr}.metrics .metric:last-child{grid-column:span 2}}
+</style>
+</head>
+<body>
+<header><div class="wrap"><h1>Simulateur de titrage acido-basique</h1><p>Titrage d'un acide faible monoprotique HA par une base forte (NaOH)</p></div></header>
+<main>
+<div class="layout">
+<section class="panel">
+<h2>Paramètres expérimentaux</h2>
+<div class="control"><label for="pka">pKa de l'acide <output id="pkaOut">4,80</output></label><input id="pka" type="range" min="1" max="10" step=".1" value="4.8"></div>
+<div class="control"><label for="ca">Concentration initiale en acide <output id="caOut">0,100 mol·L⁻¹</output></label><input id="ca" type="range" min=".01" max=".5" step=".005" value=".1"></div>
+<div class="control"><label for="cb">Concentration de NaOH <output id="cbOut">0,100 mol·L⁻¹</output></label><input id="cb" type="range" min=".01" max=".5" step=".005" value=".1"></div>
+<div class="control"><label for="va">Volume initial d'acide <output id="vaOut">20,0 mL</output></label><input id="va" type="range" min="5" max="50" step="1" value="20"></div>
+<div class="control"><label for="vb">Volume de base versé <output id="vbOut">0,0 mL</output></label><input id="vb" type="range" min="0" max="100" step=".1" value="0"></div>
+<div class="actions"><button id="half">Demi-équivalence</button><button class="secondary" id="reset">Réinitialiser</button></div>
+<p class="hint">Déplace les curseurs pour modifier les conditions ou suivre progressivement le titrage.</p>
+</section>
+<section class="panel">
+<h2>Courbe de titrage</h2>
+<div class="metrics">
+<div class="metric"><small>pH</small><strong id="phValue">—</strong></div>
+<div class="metric"><small>Volume équivalent</small><strong id="veValue">—</strong></div>
+<div class="metric"><small>État du titrage</small><strong id="stateValue" style="font-size:1rem">—</strong></div>
+</div>
+<div class="chart-wrap"><canvas id="chart" aria-label="Courbe pH en fonction du volume de base ajouté"></canvas></div>
+<div class="axis-note"><span>Volume de NaOH versé (mL)</span><span>pH</span></div>
+<div class="species">
+<div><strong>Acide HA</strong><div><span id="haPct">—</span><div class="bar"><span id="haBar"></span></div></div></div>
+<div><strong>Base conjuguée A⁻</strong><div><span id="aPct">—</span><div class="bar"><span id="aBar"></span></div></div></div>
+</div>
+<div class="note" id="explain">Le modèle tient compte des équilibres HA/A⁻ et de l'autoprotolyse de l'eau. La courbe est calculée à partir du bilan de matière et de l'électroneutralité.</div>
+</section>
+</div>
+<section class="panel" style="margin-top:18px">
+<h2>Comprendre le modèle</h2>
+<p class="equation">HA + H₂O ⇌ A⁻ + H₃O⁺ &nbsp;&nbsp; ; &nbsp;&nbsp; Kₐ = [H₃O⁺][A⁻]/[HA]</p>
+<p>À chaque volume versé, le pH est obtenu par résolution numérique de l'électroneutralité, avec la dilution et la quantité de sodium apportée par la soude. À la demi-équivalence, on retrouve pH = pKa dans l'approximation usuelle du titrage d'un acide faible par une base forte.</p>
+<p class="hint">Modèle idéal : activités assimilées aux concentrations, température de 25 °C (Kₑ = 10⁻¹⁴), volumes supposés additifs.</p>
+</section>
+</main>
+<script>
+const $=id=>document.getElementById(id), ids=['pka','ca','cb','va','vb'];
+const fmt=(x,n=2)=>x.toFixed(n).replace('.',',');
+function params(){return {pka:+$('pka').value,ca:+$('ca').value,cb:+$('cb').value,va:+$('va').value/1000,vb:+$('vb').value/1000};}
+function solvePH(p,vb){
+ const ka=10**(-p.pka),kw=1e-14,vol=p.va+vb,ct=p.ca*p.va/vol,na=p.cb*vb/vol;
+ // Electroneutrality: H+ + Na+ = OH- + A- ; A- = Ct Ka/(Ka+H)
+ const f=logh=>{const h=10**logh;return h+na-kw/h-ct*ka/(ka+h);};
+ let lo=-14,hi=0;
+ for(let i=0;i<100;i++){const mid=(lo+hi)/2;if(f(mid)>0)hi=mid;else lo=mid;}
+ return -((lo+hi)/2);
+}
+function state(p){const ve=p.ca*p.va/p.cb,ratio=p.vb/ve;let s;if(ratio<.98)s='Avant équivalence';else if(ratio<=1.02)s='Équivalence';else s='Après équivalence';return {ve,ratio,s};}
+function draw(){
+ const p=params(),st=state(p),ph=solvePH(p,p.vb),ka=10**(-p.pka),h=10**(-ph),alpha=ka/(ka+h),ha=100*(1-alpha),a=100*alpha;
+ $('pkaOut').textContent=fmt(p.pka,2);$('caOut').textContent=fmt(p.ca,3)+' mol·L⁻¹';$('cbOut').textContent=fmt(p.cb,3)+' mol·L⁻¹';$('vaOut').textContent=fmt(p.va*1000,1)+' mL';$('vbOut').textContent=fmt(p.vb*1000,1)+' mL';
+ $('phValue').textContent=fmt(ph,2);$('veValue').textContent=fmt(st.ve*1000,2)+' mL';$('stateValue').textContent=st.s;
+ $('haPct').textContent=fmt(ha,1)+' %';$('aPct').textContent=fmt(a,1)+' %';$('haBar').style.width=ha+'%';$('aBar').style.width=a+'%';
+ $('explain').textContent=st.ratio<.98?'Avant l’équivalence, le mélange contient l’acide faible HA et sa base conjuguée A⁻ : c’est une zone tampon.':st.ratio<=1.02?'À l’équivalence, la solution contient principalement A⁻, base conjuguée de l’acide faible. Le pH est supérieur à 7.':'Après l’équivalence, le pH est dominé par l’excès d’ions hydroxyde apportés par la soude.';
+ drawChart(p,st.ve);
+}
+function drawChart(p,ve){
+ const c=$('chart'),dpr=window.devicePixelRatio||1,w=c.clientWidth,h=c.clientHeight;c.width=w*dpr;c.height=h*dpr;const ctx=c.getContext('2d');ctx.scale(dpr,dpr);
+ const L=48,R=14,T=14,B=34,pw=w-L-R,ph=h-T-B,xmax=Math.max(ve*2.1,p.vb*1.15,.01),ymin=0,ymax=14;
+ const X=x=>L+x/xmax*pw,Y=y=>T+(ymax-y)/(ymax-ymin)*ph;
+ ctx.clearRect(0,0,w,h);ctx.font='12px system-ui';ctx.strokeStyle='#e5ebf3';ctx.fillStyle='#64748b';ctx.lineWidth=1;
+ for(let y=0;y<=14;y+=2){ctx.beginPath();ctx.moveTo(L,Y(y));ctx.lineTo(w-R,Y(y));ctx.stroke();ctx.fillText(y,L-27,Y(y)+4);}
+ for(let x=0;x<=xmax+1e-9;x+=xmax/5){ctx.beginPath();ctx.moveTo(X(x),T);ctx.lineTo(X(x),h-B);ctx.stroke();ctx.fillText((x*1000).toFixed(0),X(x)-9,h-12);}
+ ctx.strokeStyle='#2563eb';ctx.lineWidth=2.7;ctx.beginPath();
+ const n=260;for(let i=0;i<=n;i++){const v=xmax*i/n,y=solvePH(p,v);if(i===0)ctx.moveTo(X(v),Y(y));else ctx.lineTo(X(v),Y(y));}ctx.stroke();
+ ctx.setLineDash([5,4]);ctx.strokeStyle='#0f766e';ctx.beginPath();ctx.moveTo(X(ve),T);ctx.lineTo(X(ve),h-B);ctx.stroke();ctx.setLineDash([]);
+ ctx.fillStyle='#0f766e';ctx.fillText('Véq',Math.min(X(ve)+5,w-45),T+13);
+ const vx=p.vb;ctx.fillStyle='#dc2626';ctx.beginPath();ctx.arc(X(vx),Y(solvePH(p,vx)),5,0,Math.PI*2);ctx.fill();
+}
+ids.forEach(id=>$(id).addEventListener('input',draw));$('reset').addEventListener('click',()=>{const vals={pka:4.8,ca:.1,cb:.1,va:20,vb:0};for(const k in vals)$(k).value=vals[k];draw();});
+$('half').addEventListener('click',()=>{const p=params(),ve=p.ca*p.va/p.cb;$('vb').value=ve*500;draw();});
+window.addEventListener('resize',draw);draw();
+</script>
+</body></html>
