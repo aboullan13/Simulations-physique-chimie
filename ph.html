@@ -1,0 +1,75 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Calculateur de pH | Physique-Chimie BCPST</title>
+<style>
+:root{--ink:#17243a;--muted:#64748b;--line:#dbe3ee;--blue:#2563eb;--teal:#0f766e;--paper:#f5f8fc}
+*{box-sizing:border-box}body{margin:0;background:var(--paper);color:var(--ink);font:16px/1.5 system-ui,-apple-system,Segoe UI,Roboto,sans-serif}
+header{background:linear-gradient(120deg,#102a56,#2459a6);color:white;padding:26px 18px}header>div,main{max-width:1100px;margin:auto}h1{margin:0 0 5px;font-size:clamp(1.5rem,4vw,2.1rem)}header p{margin:0;color:#dbeafe}.nav{display:flex;gap:16px;margin-top:13px;flex-wrap:wrap}.nav a{color:#eaf2ff;text-decoration:none;font-weight:600}
+main{padding:22px 15px 42px}.panel{background:white;border:1px solid var(--line);border-radius:15px;padding:17px;margin-bottom:15px;box-shadow:0 5px 20px #1e3a5f08}h2{font-size:1.15rem;margin:0 0 12px}.muted,.hint{color:var(--muted);font-size:.9rem}.tabs{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:15px}.tabs button,.btn{border:0;border-radius:10px;padding:10px 14px;background:#e9eff8;color:var(--ink);font-weight:650;cursor:pointer}.tabs button.active,.btn.primary{background:var(--blue);color:white}.grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}.field{border:1px solid var(--line);border-radius:12px;padding:12px}.field label{display:flex;justify-content:space-between;gap:8px;font-weight:600}.field output{color:var(--blue);font-variant-numeric:tabular-nums}input[type=range]{width:100%;accent-color:var(--blue);margin-top:9px}.field input[type=text]{width:100%;border:1px solid var(--line);border-radius:8px;padding:8px;margin-top:7px;font:inherit}.summary{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}.metric{background:#f1f6ff;border-radius:12px;padding:12px}.metric small{display:block;color:var(--muted)}.metric strong{font-size:1.5rem;font-variant-numeric:tabular-nums}.species{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:9px}.species article{border:1px solid var(--line);border-radius:10px;padding:10px}.species strong{display:block}.bar{height:8px;background:#e8eef7;border-radius:10px;margin-top:7px;overflow:hidden}.bar span{display:block;height:100%;background:var(--teal)}.actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:14px}.note{background:#f0fdfa;border-left:4px solid var(--teal);padding:12px;border-radius:8px;font-size:.9rem;margin-top:12px}
+@media(max-width:650px){.grid{grid-template-columns:1fr}.summary{grid-template-columns:1fr 1fr}.metric:last-child{grid-column:span 2}}
+</style></head>
+<body>
+<header><div><h1>Calculateur de pH à l'équilibre</h1><p>Polyacides et mélanges de couples acide-base — niveau BCPST</p><nav class="nav"><a href="index.html">Accueil</a><a href="index.html#physique">Physique</a><a href="index.html#chimie">Chimie</a><a href="index.html#simulateur">Simulations</a></nav></div></header>
+<main>
+<section class="panel"><h2>Choisir le système chimique</h2><div class="tabs"><button id="tabPoly" class="active">Polyacide / polybase</button><button id="tabMix">Mélange de couples</button></div><p class="muted" id="modeHelp">Un seul système polyacide HₙA, avec plusieurs dissociations successives.</p><div id="controls"></div><div class="actions"><button class="btn primary" id="calculate">Calculer le pH</button><button class="btn" id="reset">Réinitialiser</button></div></section>
+<section class="panel"><h2>Résultat du calcul</h2><div class="summary"><div class="metric"><small>pH à l'équilibre</small><strong id="ph">—</strong></div><div class="metric"><small>[H₃O⁺] (mol·L⁻¹)</small><strong id="hconc" style="font-size:1.05rem">—</strong></div><div class="metric"><small>Vérification</small><strong id="status" style="font-size:1rem">—</strong></div></div><h2 style="margin-top:18px">Répartition des espèces</h2><div id="species" class="species"><p class="muted">Modifie les paramètres puis lance le calcul.</p></div><div class="note" id="explain">Le calcul repose sur les bilans de matière, les équilibres acide-base et l'électroneutralité.</div></section>
+<section class="panel"><h2>Modèle et hypothèses</h2><p>Chaque famille acide-base est décrite par sa concentration analytique totale et ses constantes d'acidité successives. Le degré de neutralisation représente le nombre moyen de protons neutralisés par entité initiale ; il permet de représenter aussi les formes salifiées et les mélanges tampon.</p><p class="muted">Le pH est obtenu par résolution numérique de l'électroneutralité. Modèle idéal : activités assimilées aux concentrations, température de 25 °C et Kₑ = 10⁻¹⁴. Les réactions parasites, la complexation et les précipitations ne sont pas prises en compte.</p></section>
+</main>
+<script>
+const $=id=>document.getElementById(id);let mode='poly',lastResult=null;
+const fmt=(x,n=3)=>Number(x).toExponential(n).replace('.',',');
+function slider(id,label,value,min,max,step,unit=''){return '<div class="field"><label for="'+id+'">'+label+' <output id="'+id+'Out">'+value+unit+'</output></label><input type="range" id="'+id+'" min="'+min+'" max="'+max+'" step="'+step+'" value="'+value+'"></div>'}
+function readSlider(id){return +$(id).value}
+function renderControls(){
+ const n=readSlider('count');
+ let out='<div class="grid">'+slider('count',mode==='poly'?'Nombre de dissociations':'Nombre de couples',n,1,mode==='poly'?4:5,1)+'</div><div class="grid" id="families">';
+ if(mode==='poly'){
+  out+='<div class="field"><label for="conc0">Concentration analytique totale</label><input type="range" id="conc0" min=".001" max=".5" step=".001" value=".05"><output id="conc0Out">0,050 mol·L⁻¹</output></div>';
+  out+='<div class="field"><label for="neutral0">Degré de neutralisation moyen</label><input type="range" id="neutral0" min="0" max="'+n+'" step=".01" value="0"><output id="neutral0Out">0,00 équiv.</output></div>';
+  for(let i=0;i<n;i++)out+='<div class="field"><label for="pka'+i+'">pKₐ '+(i+1)+' <output id="pka'+i+'Out">'+[2.1,7.2,12.3,13.5][i]+'</output></label><input type="range" id="pka'+i+'" min="0" max="14" step=".1" value="'+[2.1,7.2,12.3,13.5][i]+'"></div>';
+ }else{
+  for(let i=0;i<n;i++){
+   out+='<div class="field"><strong>Couple '+(i+1)+'</strong><label for="pka'+i+'">pKₐ <output id="pka'+i+'Out">'+[4.8,9.2,3.8,6.4,10.3][i]+'</output></label><input type="range" id="pka'+i+'" min="0" max="14" step=".1" value="'+[4.8,9.2,3.8,6.4,10.3][i]+'"><label for="conc'+i+'" style="margin-top:8px">Concentration totale <output id="conc'+i+'Out">0,050 mol·L⁻¹</output></label><input type="range" id="conc'+i+'" min=".001" max=".5" step=".001" value=".05"><label for="neutral'+i+'" style="margin-top:8px">Neutralisation <output id="neutral'+i+'Out">0,00 équiv.</output></label><input type="range" id="neutral'+i+'" min="0" max="1" step=".01" value="0"></div>';
+  }
+ }
+ out+='</div>'; $('controls').innerHTML=out;
+ $('count').addEventListener('input',()=>{const v=readSlider('count');$('countOut').textContent=v;renderControls();calculate();});
+ $('controls').querySelectorAll('input[type=range]').forEach(el=>el.addEventListener('input',()=>{const o=$(el.id+'Out');if(o){let unit=el.id.startsWith('conc')?' mol·L⁻¹':el.id.startsWith('neutral')?' équiv.':'';o.textContent=el.id.startsWith('conc')?readSlider(el.id).toFixed(3).replace('.',',')+unit:readSlider(el.id).toFixed(2).replace('.',',')+unit;}calculate();}));
+}
+function families(){
+ const n=readSlider('count'),arr=[];
+ if(mode==='poly'){
+  const pk=[];for(let i=0;i<n;i++)pk.push(readSlider('pka'+i));
+  arr.push({name:'H'+(n>1?n:'')+'A',pka:pk,C:readSlider('conc0'),neutral:readSlider('neutral0')});
+ }else for(let i=0;i<n;i++)arr.push({name:'Couple '+(i+1),pka:[readSlider('pka'+i)],C:readSlider('conc'+i),neutral:readSlider('neutral'+i)});
+ return arr;
+}
+function distribution(f,h){
+ const n=f.pka.length,logw=[0],kas=f.pka.map(p=>10**(-p));
+ for(let j=1;j<=n;j++)logw[j]=logw[j-1]+Math.log(kas[j-1])-Math.log(h);
+ const max=Math.max(...logw),w=logw.map(x=>Math.exp(x-max)),sum=w.reduce((a,b)=>a+b,0);
+ return w.map(x=>x/sum);
+}
+function solve(fs){
+ const kw=1e-14;
+ function charge(logh){const h=10**logh;let q=h-kw/h;for(const f of fs){const a=distribution(f,h);let z=0;for(let j=0;j<a.length;j++)z+=j*a[j];q+=f.C*(f.neutral-z);}return q;}
+ let lo=-16,hi=1,flo=charge(lo),fhi=charge(hi);
+ if(flo*fhi>0)return null;
+ for(let i=0;i<180;i++){const m=(lo+hi)/2,fm=charge(m);if(fm>0)hi=m;else lo=m;}
+ return {h:10**((lo+hi)/2),pH:-((lo+hi)/2)};
+}
+function calculate(){
+ if(!$('count'))return;const fs=families(),r=solve(fs);
+ if(!r){$('ph').textContent='—';$('hconc').textContent='—';$('status').textContent='Non résolu';$('species').innerHTML='<p>Impossible de trouver une solution dans le domaine numérique choisi. Vérifie les paramètres.</p>';return;}
+ $('ph').textContent=r.pH.toFixed(3).replace('.',',');$('hconc').textContent=fmt(r.h);$('status').textContent='Convergent';
+ let html='';
+ fs.forEach((f,k)=>{const a=distribution(f,r.h);html+='<article><strong>'+(mode==='poly'?'Famille HₙA':'Couple '+(k+1))+'</strong><div class="muted">C totale = '+f.C.toFixed(3).replace('.',',')+' mol·L⁻¹</div>';a.forEach((v,j)=>{const label=mode==='poly'?'H'+(f.pka.length-j?f.pka.length-j:'')+'A'+(j?' '+('−'.repeat(j)):''):(j===0?'HA':'A⁻');html+='<div style="margin-top:7px;font-size:.88rem">'+label+' : '+(100*v).toFixed(2).replace('.',',')+' % <div class="bar"><span style="width:'+(100*v)+'%"></span></div></div>';});html+='</article>';});
+ $('species').innerHTML=html;$('explain').textContent='Résolution par dichotomie du bilan d’électroneutralité. Les concentrations des formes acido-basiques sont calculées à partir des fractions de distribution de chaque famille.';
+}
+function setMode(m){mode=m;$('tabPoly').classList.toggle('active',m==='poly');$('tabMix').classList.toggle('active',m==='mix');$('modeHelp').textContent=m==='poly'?'Un seul système polyacide HₙA, avec plusieurs dissociations successives.':'Plusieurs couples monoprotés indépendants, chacun avec sa concentration et son degré de neutralisation.';renderControls();calculate();}
+$('tabPoly').onclick=()=>setMode('poly');$('tabMix').onclick=()=>setMode('mix');$('calculate').onclick=calculate;
+$('reset').onclick=()=>{setMode(mode);};
+setMode('poly');
+</script></body></html>
