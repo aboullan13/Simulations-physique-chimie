@@ -14,7 +14,7 @@ main{padding:22px 15px 42px}.panel{background:white;border:1px solid var(--line)
 <header><div><h1>Simulateur de spectres IR et RMN</h1><p>Banque de molécules — spectres théoriques pédagogiques</p><nav class="nav"><a href="index.html">Accueil</a><a href="ph.html">Calculateur de pH</a></nav></div></header>
 <main>
 <section class="panel"><h2>Choisir un composé</h2><div class="selector"><div class="field"><label for="molecule">Molécule</label><select id="molecule"></select></div><div class="field"><label>Formule brute</label><div id="formula" style="font-size:1.25rem;font-weight:700;padding:7px 0">—</div><div id="family" class="muted"></div></div></div><div id="description" class="info"></div></section>
-<section class="panel"><div class="tabs"><button id="irTab" class="active">Spectre infrarouge (IR)</button><button id="nmrTab">RMN du proton (¹H)</button></div><div id="irView"><h2>Spectre infrarouge</h2><p class="muted">Transmittance simulée en fonction du nombre d’onde. Les bandes sont représentées par des absorptions descendantes.</p><div id="irChart" class="chart"></div><div id="irPeaks" class="peaklist"></div></div><div id="nmrView" hidden><h2>Spectre RMN du proton ¹H</h2><p class="muted">Spectre simulé en fonction du déplacement chimique δ (ppm), avec multiplets de premier ordre, raies élargies et intégration.</p><div class="selector" style="margin:12px 0"><div class="field"><label for="frequency">Fréquence du spectromètre</label><select id="frequency"><option value="300">300 MHz</option><option value="400" selected>400 MHz</option><option value="500">500 MHz</option><option value="600">600 MHz</option></select></div><div class="field"><label for="linewidth">Largeur instrumentale des raies (Hz)</label><input id="linewidth" type="range" min="0.3" max="3.5" step="0.1" value="0.8" style="width:100%"><strong id="linewidthOut">1,2 Hz</strong></div></div><div id="nmrChart" class="chart"></div><div class="legend"><span>— <b style="color:#0f766e">Signal RMN</b></span><span>— <b style="color:#d97706">Intégrale</b></span></div><div id="nmrPeaks" class="peaklist"></div></div></section>
+<section class="panel"><div class="tabs"><button id="irTab" class="active">Spectre infrarouge (IR)</button><button id="nmrTab">RMN du proton (¹H)</button></div><div id="irView"><h2>Spectre infrarouge</h2><p class="muted">Transmittance simulée en fonction du nombre d’onde. Les bandes sont représentées par des absorptions descendantes.</p><div id="irChart" class="chart"></div><div id="irPeaks" class="peaklist"></div></div><div id="nmrView" hidden><h2>Spectre RMN du proton ¹H</h2><p class="muted">Spectre simulé en fonction du déplacement chimique δ (ppm), avec multiplets de premier ordre, raies élargies et intégration.</p><div class="selector" style="margin:12px 0"><div class="field"><label for="frequency">Fréquence du spectromètre</label><select id="frequency"><option value="300">300 MHz</option><option value="400" selected>400 MHz</option><option value="500">500 MHz</option><option value="600">600 MHz</option></select></div><div class="field"><label for="linewidth">Largeur instrumentale des raies (Hz)</label><input id="linewidth" type="range" min="0.3" max="3.5" step="0.1" value="0.8" style="width:100%"><strong id="linewidthOut">0,8 Hz</strong></div><div class="field"><label for="zoomCenter">Zone à agrandir</label><select id="zoomCenter"><option value="all">Tout le spectre</option></select></div><div class="field"><label for="zoom">Zoom horizontal</label><input id="zoom" type="range" min="1" max="20" step="0.5" value="1" style="width:100%"><strong id="zoomOut">× 1</strong></div></div><div id="nmrChart" class="chart"></div><div class="legend"><span>— <b style="color:#0f766e">Signal RMN</b></span><span>— <b style="color:#d97706">Intégrale</b></span></div><div id="nmrPeaks" class="peaklist"></div></div></section>
 <section class="panel"><h2>À propos des simulations</h2><p>Les positions et les formes des signaux sont des valeurs indicatives destinées à l’apprentissage de l’identification des fonctions chimiques et de l’interprétation des spectres.</p><p class="foot">Les spectres ne proviennent pas de mesures expérimentales ni d’un calcul quantique. Les multiplets sont simulés dans l’approximation du premier ordre ; les couplages complexes, les effets de second ordre, le solvant et les échanges de protons ne sont pas entièrement modélisés. Les déplacements chimiques restent indicatifs.</p></section>
 </main>
 <script>
@@ -28,7 +28,7 @@ const compounds={
  propanal:{name:"Propanal",formula:"C₃H₆O",family:"Aldéhyde",desc:"Aldéhyde : bande C=O vers 1725 cm⁻¹ et faibles bandes C–H aldéhydiques vers 2720–2820 cm⁻¹. Le proton CHO est très déblindé.",ir:[[2960,100,.2,"C–H"],[2820,35,.18,"C–H aldéhydique"],[2720,35,.15,"C–H aldéhydique"],[1725,45,.9,"C=O aldéhyde"],[1400,55,.2,"Déformation CH₂"]],nmr:[{d:0.98,m:"t",j:7.4,i:3,l:"CH₃"},{d:2.45,m:"qd",j:7.4,j2:1.5,i:2,l:"CH₂–CHO"},{d:9.78,m:"t",j:1.5,i:1,l:"CHO"}]}
 };
 const $=id=>document.getElementById(id);let current='ethanol',view='ir';
-function init(){const sel=$('molecule');Object.keys(compounds).forEach(k=>{let o=document.createElement('option');o.value=k;o.textContent=compounds[k].name;sel.appendChild(o)});sel.addEventListener('change',()=>{current=sel.value;render()});$('irTab').onclick=()=>setView('ir');$('nmrTab').onclick=()=>setView('nmr');$('frequency').addEventListener('change',()=>renderNMR(compounds[current]));$('linewidth').addEventListener('input',()=>renderNMR(compounds[current]));render();}
+function init(){const sel=$('molecule');Object.keys(compounds).forEach(k=>{let o=document.createElement('option');o.value=k;o.textContent=compounds[k].name;sel.appendChild(o)});sel.addEventListener('change',()=>{current=sel.value;render()});$('irTab').onclick=()=>setView('ir');$('nmrTab').onclick=()=>setView('nmr');$('frequency').addEventListener('change',()=>renderNMR(compounds[current]));$('linewidth').addEventListener('input',()=>renderNMR(compounds[current]));$('zoom').addEventListener('input',()=>renderNMR(compounds[current]));$('zoomCenter').addEventListener('change',()=>renderNMR(compounds[current]));render();}
 function setView(v){view=v;$('irView').hidden=v!=='ir';$('nmrView').hidden=v!=='nmr';$('irTab').classList.toggle('active',v==='ir');$('nmrTab').classList.toggle('active',v==='nmr');}
 function gauss(x,mu,s){return Math.exp(-.5*((x-mu)/s)**2)}
 function renderIR(m){
@@ -59,17 +59,22 @@ function components(s){
 }
 function renderNMR(m){
  const W=900,H=410,L=62,R=24,T=35,B=58,pw=W-L-R,ph=H-T-B;
- const freq=+$('frequency').value,inst=+$('linewidth').value;
+ const freq=+$('frequency').value,inst=+$('linewidth').value,zoom=+$('zoom').value,centerValue=$('zoomCenter').value;
+ const center=centerValue==='all'?6:+centerValue,span=12/zoom,left=Math.min(12,center+span/2),right=Math.max(0,center-span/2);
+ $('zoomOut').textContent='× '+zoom.toFixed(1).replace('.',',');
+ const centerSelect=$('zoomCenter'),oldCenter=centerSelect.value;
+ if(centerSelect.options.length!==m.nmr.length+1){centerSelect.innerHTML='<option value="all">Tout le spectre</option>'+m.nmr.map((s,i)=>'<option value="'+s.d+'">'+escapeXml(s.l)+' ('+s.d.toFixed(2)+' ppm)</option>').join('');if(oldCenter!=='all'&&m.nmr.some(s=>String(s.d)===oldCenter))centerSelect.value=oldCenter;}
+ const X=d=>L+(left-d)/(left-right)*pw,Y=v=>T+(1-v)*ph;
  $('linewidthOut').textContent=inst.toFixed(1).replace('.',',')+' Hz';
  const X=d=>L+(12-d)/12*pw,Y=v=>T+(1-v)*ph;
- const N=12000,dx=12/(N-1),ys=new Array(N).fill(0);
+ const N=12000,dx=(left-right)/(N-1),ys=new Array(N).fill(0);
  const groups=m.nmr.map(s=>{
   const cp=components(s),spl=(s.j||0)/freq;
   const sigHz=s.m==='br'?16:(s.m==='m'?5:inst);
   const sigma=Math.max(.00012,sigHz/freq/2.355);
   const total=cp.w.reduce((a,b)=>a+b,0);
   const peaks=cp.o.map((o,i)=>({d:s.d+(cp.hz?o/freq:o*spl),weight:cp.w[i]/total}));
-  peaks.forEach(pk=>{for(let k=0;k<N;k++){const d=12-k*dx;const z=(d-pk.d)/sigma;ys[k]+=s.i*pk.weight*Math.exp(-.5*z*z)/(sigma*2.5066);}});
+  peaks.forEach(pk=>{for(let k=0;k<N;k++){const d=left-k*dx;const z=(d-pk.d)/sigma;ys[k]+=s.i*pk.weight*Math.exp(-.5*z*z)/(sigma*2.5066);}});
   return {...s,peaks,cp,sigma};
  });
  const max=Math.max(...ys,1e-12),norm=ys.map(v=>v/max);
@@ -77,13 +82,13 @@ function renderNMR(m){
  const totalArea=cumulative[N-1]||1,integral=cumulative.map(v=>v/totalArea);
  let svg='<svg viewBox="0 0 '+W+' '+H+'" role="img" aria-label="Spectre RMN du proton simulé avec multiplets et intégration"><g stroke="#e2e8f0" fill="none">';
  [0,.25,.5,.75,1].forEach(v=>svg+='<line x1="'+L+'" y1="'+Y(v)+'" x2="'+(W-R)+'" y2="'+Y(v)+'"/>');
- [12,10,8,6,4,2,0].forEach(v=>svg+='<line x1="'+X(v)+'" y1="'+T+'" x2="'+X(v)+'" y2="'+(H-B)+'"/>');
+ const ticks=Array.from({length:7},(_,i)=>right+(left-right)*i/6);ticks.forEach(v=>svg+='<line x1="'+X(v)+'" y1="'+T+'" x2="'+X(v)+'" y2="'+(H-B)+'"/>');
  svg+='</g><g fill="#64748b" font-size="12">';
- [12,10,8,6,4,2,0].forEach(v=>svg+='<text x="'+X(v)+'" y="'+(H-B+21)+'" text-anchor="middle">'+v+'</text>');
+ ticks.forEach(v=>svg+='<text x="'+X(v)+'" y="'+(H-B+21)+'" text-anchor="middle">'+v.toFixed(2)+'</text>');
  svg+='<text x="'+(L+pw/2)+'" y="'+(H-10)+'" text-anchor="middle">Déplacement chimique δ (ppm) — '+freq+' MHz</text><text x="15" y="'+(T+ph/2)+'" transform="rotate(-90 15 '+(T+ph/2)+')" text-anchor="middle">Intensité</text></g>';
- let spectrum='';for(let k=0;k<N;k++)spectrum+=(k?' L':'M')+X(12-k*dx).toFixed(2)+' '+Y(norm[k]*.88).toFixed(2);
+ let spectrum='';for(let k=0;k<N;k++)spectrum+=(k?' L':'M')+X(left-k*dx).toFixed(2)+' '+Y(norm[k]*.88).toFixed(2);
  svg+='<path d="'+spectrum+'" fill="none" stroke="#0f766e" stroke-width="0.95"/>';
- let integ='';for(let k=0;k<N;k++)integ+=(k?' L':'M')+X(12-k*dx).toFixed(2)+' '+Y(.04+integral[k]*.2).toFixed(2);
+ let integ='';for(let k=0;k<N;k++)integ+=(k?' L':'M')+X(left-k*dx).toFixed(2)+' '+Y(.04+integral[k]*.2).toFixed(2);
  svg+='<path d="'+integ+'" fill="none" stroke="#d97706" stroke-width="1.35"/>';
  groups.forEach(s=>{
   const labelY=T+16;
@@ -99,6 +104,6 @@ function renderNMR(m){
  }).join('');
 }
 function escapeXml(s){return String(s).replace(/[&<>"']/g,ch=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&apos;'}[ch]));}
-function render(){const m=compounds[current];$('formula').textContent=m.formula;$('family').textContent=m.family;$('description').textContent=m.desc;renderIR(m);renderNMR(m);}
+function render(){const m=compounds[current];$('zoomCenter').innerHTML='<option value="all">Tout le spectre</option>'+m.nmr.map(s=>'<option value="'+s.d+'">'+escapeXml(s.l)+' ('+s.d.toFixed(2)+' ppm)</option>').join('');$('zoom').value=1;$('formula').textContent=m.formula;$('family').textContent=m.family;$('description').textContent=m.desc;renderIR(m);renderNMR(m);}
 init();
 </script></body></html>
