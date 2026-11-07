@@ -60,7 +60,7 @@ function components(s){
 function renderNMR(m){
  const W=900,H=410,L=62,R=24,T=35,B=58,pw=W-L-R,ph=H-T-B;
  const freq=+$('frequency').value,inst=+$('linewidth').value,zoom=+$('zoom').value,centerValue=$('zoomCenter').value;
- const baseCenter=centerValue==='all'?6:+centerValue,span=12/zoom,pan=+$('nmrPan').value,center=Math.max(span/2,Math.min(12-span/2,baseCenter-pan/100*(12-span)/2)),left=center+span/2,right=center-span/2;\n $('nmrPanOut').textContent=pan===0?'Position initiale':(pan<0?'Vers la droite':'Vers la gauche')+' · '+Math.abs(pan)+' %';
+ const baseCenter=centerValue==='all'?6:+centerValue,span=12/zoom,pan=+$('nmrPan').value,center=Math.max(span/2,Math.min(12-span/2,baseCenter-pan/100*(12-span)/2)),left=center+span/2,right=center-span/2;\n $('nmrPanOut').textContent=pan===0?'Position initiale':(pan<0?'Vers la gauche':'Vers la droite')+' · '+Math.abs(pan)+' %';
  $('zoomOut').textContent='× '+zoom.toFixed(1).replace('.',',');
  const centerSelect=$('zoomCenter'),oldCenter=centerSelect.value;
  if(centerSelect.options.length!==m.nmr.length+1){centerSelect.innerHTML='<option value="all">Tout le spectre</option>'+m.nmr.map((s,i)=>'<option value="'+s.d+'">'+escapeXml(s.l)+' ('+s.d.toFixed(2)+' ppm)</option>').join('');if(oldCenter!=='all'&&m.nmr.some(s=>String(s.d)===oldCenter))centerSelect.value=oldCenter;}
