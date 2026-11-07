@@ -77,7 +77,7 @@ function draw(i,n1,n2,r,total,critical){
  ctx.fillStyle='#334155';ctx.font='12px system-ui';ctx.fillText('i',cx-43,cy+38);ctx.fillText('i',cx+38,cy+38);if(!total)ctx.fillText('r',cx+35,cy-36);
  if(total){ctx.setLineDash([4,4]);ctx.strokeStyle='#0f766e';ctx.beginPath();ctx.moveTo(cx,cy);ctx.lineTo(cx+L,cy);ctx.stroke();ctx.setLineDash([]);ctx.fillStyle='#0f766e';ctx.fillText('direction limite (r = 90°)',cx+8,cy-9);}
 }
-function animate(t){if(!running)return;if(!last)last=t;const dt=Math.min(50,t-last);last=t;phase+=dt/850;let a=+ $('angle').value+.035*dt;if(a>89)a=0;$('angle').value=a;update();raf=requestAnimationFrame(animate);}
+function animate(t){if(!running)return;if(!last)last=t;const dt=Math.min(50,t-last);last=t;phase+=dt/850;let a=+ $('angle').value+.008*dt;if(a>89)a=0;$('angle').value=a;update();raf=requestAnimationFrame(animate);}
 $('angle').addEventListener('input',()=>{if(running)stop();update();});$('n1').addEventListener('input',update);$('n2').addEventListener('input',update);
 function stop(){running=false;cancelAnimationFrame(raf);$('play').textContent='▶ Animer l’angle';last=0;}
 $('play').addEventListener('click',()=>{if(running){stop();}else{running=true;$('play').textContent='Ⅱ Pause';raf=requestAnimationFrame(animate);}});
