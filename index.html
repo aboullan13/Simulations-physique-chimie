@@ -83,8 +83,8 @@ function drawChart(p,ve){
  ctx.clearRect(0,0,w,h);ctx.font='12px system-ui';ctx.strokeStyle='#e5ebf3';ctx.fillStyle='#64748b';ctx.lineWidth=1;
  for(let y=0;y<=14;y+=2){ctx.beginPath();ctx.moveTo(L,Y(y));ctx.lineTo(w-R,Y(y));ctx.stroke();ctx.fillText(y,L-27,Y(y)+4);}
  for(let x=0;x<=xmax+1e-9;x+=xmax/5){ctx.beginPath();ctx.moveTo(X(x),T);ctx.lineTo(X(x),h-B);ctx.stroke();ctx.fillText((x*1000).toFixed(0),X(x)-9,h-12);}
- ctx.strokeStyle='#2563eb';ctx.lineWidth=2.7;ctx.beginPath();
- const n=260;for(let i=0;i<=n;i++){const v=xmax*i/n,y=solvePH(p,v);if(i===0)ctx.moveTo(X(v),Y(y));else ctx.lineTo(X(v),Y(y));}ctx.stroke();
+ ctx.strokeStyle='#2563eb';ctx.lineWidth=1.4;ctx.beginPath();
+ const n=600;for(let i=0;i<=n;i++){const v=xmax*i/n,y=solvePH(p,v);if(i===0)ctx.moveTo(X(v),Y(y));else ctx.lineTo(X(v),Y(y));}ctx.stroke();
  ctx.setLineDash([5,4]);ctx.strokeStyle='#0f766e';ctx.beginPath();ctx.moveTo(X(ve),T);ctx.lineTo(X(ve),h-B);ctx.stroke();ctx.setLineDash([]);
  ctx.fillStyle='#0f766e';ctx.fillText('Véq',Math.min(X(ve)+5,w-45),T+13);
  const vx=p.vb;ctx.fillStyle='#dc2626';ctx.beginPath();ctx.arc(X(vx),Y(solvePH(p,vx)),5,0,Math.PI*2);ctx.fill();
