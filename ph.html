@@ -23,28 +23,29 @@ const fmt=(x,n=3)=>Number(x).toExponential(n).replace('.',',');
 function slider(id,label,value,min,max,step,unit=''){return '<div class="field"><label for="'+id+'">'+label+' <output id="'+id+'Out">'+value+unit+'</output></label><input type="range" id="'+id+'" min="'+min+'" max="'+max+'" step="'+step+'" value="'+value+'"></div>'}
 function readSlider(id){return +$(id).value}
 function renderControls(){
- const n=readSlider('count');
- let out='<div class="grid">'+slider('count',mode==='poly'?'Nombre de dissociations':'Nombre de couples',n,1,mode==='poly'?4:5,1)+'</div><div class="grid" id="families">';
+ const n=$('count')?readSlider('count'):1;
+ let out='<div class="grid">'+slider('count',mode==='poly'?'Nombre de dissociations':'Nombre de couples',n,1,mode==='poly'?4:5,1)+'</div>';
+ out+='<p class="hint">Saisis directement les noms et les valeurs numériques dans les cases. Les pKₐ sont exprimés sans unité.</p><div class="grid" id="families">';
  if(mode==='poly'){
-  out+='<div class="field"><label for="acidName">Nom de l\'acide</label><input type="text" id="acidName" value="Acide polyprotique" placeholder="Ex. acide phosphorique"></div>';
-  out+='<div class="field"><label for="conc0">Concentration analytique totale</label><input type="range" id="conc0" min=".001" max=".5" step=".001" value=".05"><output id="conc0Out">0,050 mol·L⁻¹</output></div>';
-  out+='<div class="field"><label for="neutral0">Degré de neutralisation moyen</label><input type="range" id="neutral0" min="0" max="'+n+'" step=".01" value="0"><output id="neutral0Out">0,00 équiv.</output></div>';
-  for(let i=0;i<n;i++)out+='<div class="field"><label for="pka'+i+'">pKₐ de la dissociation '+(i+1)+' <output id="pka'+i+'Out">'+[2.1,7.2,12.3,13.5][i]+'</output></label><input type="range" id="pka'+i+'" min="0" max="14" step=".1" value="'+[2.1,7.2,12.3,13.5][i]+'"></div>';
+  out+='<div class="field"><label for="acidName">Nom de l’acide</label><input type="text" id="acidName" value="Acide phosphorique" placeholder="Ex. acide phosphorique"><p class="hint">Tu peux écrire le nom de ton choix.</p></div>';
+  out+='<div class="field"><label for="conc0">Concentration totale (mol·L⁻¹)</label><input type="number" id="conc0" min="0.000001" max="10" step="any" value="0.05"></div>';
+  out+='<div class="field"><label for="neutral0">Degré de neutralisation (équivalents)</label><input type="number" id="neutral0" min="0" max="'+n+'" step="0.01" value="0"></div>';
+  for(let i=0;i<n;i++)out+='<div class="field"><label for="pka'+i+'">pKₐ de la dissociation '+(i+1)+'</label><input type="number" id="pka'+i+'" min="-5" max="30" step="0.01" value="'+[2.15,7.20,12.35,14][i]+'"></div>';
  }else{
   for(let i=0;i<n;i++){
-   out+='<div class="field"><strong>Couple '+(i+1)+'</strong><label for="name'+i+'" style="margin-top:8px">Nom du couple</label><input type="text" id="name'+i+'" value="'+['Acide éthanoïque / éthanoate','Ion ammonium / ammoniaque','Acide méthanoïque / méthanoate','Acide carbonique / hydrogénocarbonate','Eau / ion hydroxyde'][i]+'" placeholder="Ex. AH / A⁻"><label for="pka'+i+'" style="margin-top:8px">pKₐ <output id="pka'+i+'Out">'+[4.8,9.2,3.8,6.4,10.3][i]+'</output></label><input type="range" id="pka'+i+'" min="0" max="14" step=".1" value="'+[4.8,9.2,3.8,6.4,10.3][i]+'"><label for="conc'+i+'" style="margin-top:8px">Concentration totale <output id="conc'+i+'Out">0,050 mol·L⁻¹</output></label><input type="range" id="conc'+i+'" min=".001" max=".5" step=".001" value=".05"><label for="neutral'+i+'" style="margin-top:8px">Degré de neutralisation <output id="neutral'+i+'Out">0,00 équiv.</output></label><input type="range" id="neutral'+i+'" min="0" max="1" step=".01" value="0"></div>';
+   out+='<div class="field"><strong>Couple acide-base '+(i+1)+'</strong><label for="name'+i+'" style="margin-top:8px">Nom du couple (ou de l’acide)</label><input type="text" id="name'+i+'" value="'+['Acide éthanoïque / ion éthanoate','Ion ammonium / ammoniaque','Acide méthanoïque / ion méthanoate','Acide carbonique / hydrogénocarbonate','Eau / ion hydroxyde'][i]+'" placeholder="Ex. acide éthanoïque / éthanoate"><label for="pka'+i+'" style="margin-top:8px">Valeur du pKₐ</label><input type="number" id="pka'+i+'" min="-5" max="30" step="0.01" value="'+[4.76,9.25,3.75,6.35,14][i]+'"><label for="conc'+i+'" style="margin-top:8px">Concentration totale (mol·L⁻¹)</label><input type="number" id="conc'+i+'" min="0.000001" max="10" step="any" value="0.05"><label for="neutral'+i+'" style="margin-top:8px">Degré de neutralisation (0 à 1)</label><input type="number" id="neutral'+i+'" min="0" max="1" step="0.01" value="0"><p class="hint">0 : forme acide HA seule au départ ; 1 : forme basique A⁻ seule ; 0,5 : mélange tampon à proportions égales.</p></div>';
   }
  }
  out+='</div>'; $('controls').innerHTML=out;
  $('count').addEventListener('input',()=>{const v=readSlider('count');$('countOut').textContent=v;renderControls();calculate();});
- $('controls').querySelectorAll('input[type=range]').forEach(el=>el.addEventListener('input',()=>{const o=$(el.id+'Out');if(o){let unit=el.id.startsWith('conc')?' mol·L⁻¹':el.id.startsWith('neutral')?' équiv.':'';o.textContent=el.id.startsWith('conc')?readSlider(el.id).toFixed(3).replace('.',',')+unit:readSlider(el.id).toFixed(2).replace('.',',')+unit;}calculate();}));
+ $('controls').querySelectorAll('input').forEach(el=>el.addEventListener('input',()=>{if(el.id==='count')return;calculate();}));
 }
 function families(){
  const n=readSlider('count'),arr=[];
  if(mode==='poly'){
-  const pk=[];for(let i=0;i<n;i++)pk.push(readSlider('pka'+i));
-  arr.push({name:$('acidName').value||'Acide polyprotique',pka:pk,C:readSlider('conc0'),neutral:readSlider('neutral0')});
- }else for(let i=0;i<n;i++)arr.push({name:$('name'+i).value||'Couple '+(i+1),pka:[readSlider('pka'+i)],C:readSlider('conc'+i),neutral:readSlider('neutral'+i)});
+  const pk=[];for(let i=0;i<n;i++)pk.push(+$('pka'+i).value);
+  arr.push({name:$('acidName').value||'Acide polyprotique',pka:pk,C:+$('conc0').value,neutral:+$('neutral0').value});
+ }else for(let i=0;i<n;i++)arr.push({name:$('name'+i).value||'Couple '+(i+1),pka:[+$('pka'+i).value],C:+$('conc'+i).value,neutral:+$('neutral'+i).value});
  return arr;
 }
 function distribution(f,h){
