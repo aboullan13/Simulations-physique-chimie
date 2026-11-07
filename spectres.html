@@ -66,7 +66,6 @@ function renderNMR(m){
  if(centerSelect.options.length!==m.nmr.length+1){centerSelect.innerHTML='<option value="all">Tout le spectre</option>'+m.nmr.map((s,i)=>'<option value="'+s.d+'">'+escapeXml(s.l)+' ('+s.d.toFixed(2)+' ppm)</option>').join('');if(oldCenter!=='all'&&m.nmr.some(s=>String(s.d)===oldCenter))centerSelect.value=oldCenter;}
  const X=d=>L+(left-d)/(left-right)*pw,Y=v=>T+(1-v)*ph;
  $('linewidthOut').textContent=inst.toFixed(1).replace('.',',')+' Hz';
- const X=d=>L+(12-d)/12*pw,Y=v=>T+(1-v)*ph;
  const N=12000,dx=(left-right)/(N-1),ys=new Array(N).fill(0);
  const groups=m.nmr.map(s=>{
   const cp=components(s),spl=(s.j||0)/freq;
