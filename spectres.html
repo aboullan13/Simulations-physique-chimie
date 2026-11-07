@@ -51,7 +51,7 @@ function multipletOffsets(m){if(m.m==='s')return [0];if(m.m==='d')return [-.5,.5
 function renderNMR(m){
  const W=850,H=360,L=60,R=22,T=20,B=55,pw=W-L-R,ph=H-T-B;
  const X=d=>L+(12-d)/12*pw,Y=v=>T+(1-v)*ph;
- let lines=[];m.nmr.forEach(s=>{const offsets=multipletOffsets(s);offsets.forEach((o)=>lines.push({d:s.d+o*(s.j||0)/1000,h:1,l:s.l}));});
+ let lines=[];m.nmr.forEach(s=>{const offsets=multipletOffsets(s);offsets.forEach((o)=>lines.push({d:s.d+o*(s.j||0)/400,h:1,l:s.l}));});
  let svg='<svg viewBox="0 0 '+W+' '+H+'" role="img" aria-label="Spectre RMN proton simulé"><g stroke="#dbe3ee">';
  [0,.25,.5,.75,1].forEach(v=>svg+='<line x1="'+L+'" y1="'+Y(v)+'" x2="'+(W-R)+'" y2="'+Y(v)+'"/>');
  [12,10,8,6,4,2,0].forEach(v=>svg+='<line x1="'+X(v)+'" y1="'+T+'" x2="'+X(v)+'" y2="'+(H-B)+'"/>');svg+='</g><g fill="#64748b" font-size="12">';
