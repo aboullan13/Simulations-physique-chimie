@@ -33,7 +33,7 @@ function setView(v){view=v;$('irView').hidden=v!=='ir';$('nmrView').hidden=v!=='
 function gauss(x,mu,s){return Math.exp(-.5*((x-mu)/s)**2)}
 function renderIR(m){
  const W=850,H=360,L=66,R=22,T=20,B=55,pw=W-L-R,ph=H-T-B;
- const iz=+$('irZoom').value,ip=+$('irPan').value,span=3500/iz,left=4000-span/2-ip/100*(3500-span),right=left-span;
+ const iz=+$('irZoom').value,ip=+$('irPan').value,span=3500/iz,left=4000-ip/100*(3500-span),right=left-span;
  $('irZoomOut').textContent='× '+iz.toFixed(1).replace('.',',');$('irPanOut').textContent=Math.round(ip)+' %';
  const X=w=>L+(left-w)/span*pw,Y=t=>T+(100-t)/100*ph;
  let svg='<svg viewBox="0 0 '+W+' '+H+'" role="img" aria-label="Spectre infrarouge simulé"><g fill="none" stroke="#dbe3ee">';
