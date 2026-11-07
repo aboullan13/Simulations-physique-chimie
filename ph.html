@@ -14,7 +14,7 @@ main{padding:22px 15px 42px}.panel{background:white;border:1px solid var(--line)
 <header><div><h1>Calculateur de pH à l'équilibre</h1><p>Polyacides et mélanges de couples acide-base — niveau BCPST</p><nav class="nav"><a href="index.html">Accueil</a><a href="index.html#physique">Physique</a><a href="index.html#chimie">Chimie</a><a href="index.html#simulateur">Simulations</a></nav></div></header>
 <main>
 <section class="panel"><h2>Choisir le système chimique</h2><div class="tabs"><button id="tabPoly" class="active">Polyacide / polybase</button><button id="tabMix">Mélange de couples</button></div><p class="muted" id="modeHelp">Un seul système polyacide HₙA, avec plusieurs dissociations successives.</p><div id="controls"></div><div class="actions"><button class="btn primary" id="calculate">Calculer le pH</button><button class="btn" id="reset">Réinitialiser</button></div></section>
-<section class="panel"><h2>Résultat du calcul</h2><div class="summary"><div class="metric"><small>pH à l'équilibre</small><strong id="ph">—</strong></div><div class="metric"><small>[H₃O⁺] (mol·L⁻¹)</small><strong id="hconc" style="font-size:1.05rem">—</strong></div><div class="metric"><small>Vérification</small><strong id="status" style="font-size:1rem">—</strong></div></div><h2 style="margin-top:18px">Répartition des espèces</h2><div id="species" class="species"><p class="muted">Modifie les paramètres puis lance le calcul.</p></div><div class="note" id="explain">Le calcul repose sur les bilans de matière, les équilibres acide-base et l'électroneutralité.</div></section>
+<section class="panel"><h2>Résultat du calcul</h2><div class="summary"><div class="metric"><small>pH à l'équilibre</small><strong id="ph">—</strong></div><div class="metric"><small>[H₃O⁺] (mol·L⁻¹)</small><strong id="hconc" style="font-size:1.05rem">—</strong></div><div class="metric"><small>Vérification</small><strong id="status" style="font-size:1rem">—</strong></div></div><h2 style="margin-top:18px">Répartition des espèces</h2><div id="species" class="species"><p class="muted">Modifie les paramètres puis lance le calcul.</p></div><h2 style="margin-top:22px">Courbes de distribution en fonction du pH</h2><p class="muted">Chaque courbe représente le pourcentage d’une forme chimique. Les courbes sont calculées entre pH 0 et 14.</p><div id="distributionChart" style="width:100%;overflow:hidden"><p class="muted">Le graphique apparaîtra ici.</p></div><div class="note" id="explain">Le calcul repose sur les bilans de matière, les équilibres acide-base et l'électroneutralité.</div></section>
 <section class="panel"><h2>Modèle et hypothèses</h2><p>Chaque famille acide-base est décrite par sa concentration analytique totale et ses constantes d'acidité successives. Le degré de neutralisation représente le nombre moyen de protons neutralisés par entité initiale ; il permet de représenter aussi les formes salifiées et les mélanges tampon.</p><p class="muted">Le pH est obtenu par résolution numérique de l'électroneutralité. Modèle idéal : activités assimilées aux concentrations, température de 25 °C et Kₑ = 10⁻¹⁴. Les réactions parasites, la complexation et les précipitations ne sont pas prises en compte.</p></section>
 </main>
 <script>
@@ -62,13 +62,33 @@ function solve(fs){
  for(let i=0;i<180;i++){const m=(lo+hi)/2,fm=charge(m);if(fm>0)hi=m;else lo=m;}
  return {h:10**((lo+hi)/2),pH:-((lo+hi)/2)};
 }
+function speciesLabel(f,j){
+ if(f.pka.length===1)return f.name+' — '+(j===0?'forme acide':'forme basique');
+ const n=f.pka.length-j, subs=['₀','₁','₂','₃','₄'],sup=['⁰','⁻','²⁻','³⁻','⁴⁻'];
+ return 'H'+(n===0?'':subs[n]||n)+'A'+(j===0?'':sup[j]||(' ('+j+'−)'));
+}
+function drawDistributionChart(fs){
+ const W=820,H=330,L=58,R=18,T=18,B=48, PW=W-L-R,PH=H-T-B;
+ const colors=['#2563eb','#dc6b22','#15956b','#9b59b6','#c43d64','#68758a','#b08b12','#0b8793'];
+ const x=p=>L+PW*p/14, y=v=>T+PH*(1-v);
+ let svg='<svg viewBox="0 0 '+W+' '+H+'" role="img" aria-label="Courbes de distribution des espèces en fonction du pH" style="width:100%;height:auto;font-family:system-ui,sans-serif">';
+ for(let v=0;v<=1.001;v+=.2){const yy=y(v);svg+='<line x1="'+L+'" y1="'+yy+'" x2="'+(W-R)+'" y2="'+yy+'" stroke="#dbe3ee" stroke-width="1"/><text x="'+(L-10)+'" y="'+(yy+4)+'" text-anchor="end" font-size="12" fill="#64748b">'+Math.round(v*100)+'%</text>';}
+ for(let p=0;p<=14;p+=2){const xx=x(p);svg+='<line x1="'+xx+'" y1="'+T+'" x2="'+xx+'" y2="'+(H-B)+'" stroke="#edf1f6" stroke-width="1"/><text x="'+xx+'" y="'+(H-B+20)+'" text-anchor="middle" font-size="12" fill="#64748b">'+p+'</text>';}
+ svg+='<line x1="'+L+'" y1="'+T+'" x2="'+L+'" y2="'+(H-B)+'" stroke="#64748b"/><line x1="'+L+'" y1="'+(H-B)+'" x2="'+(W-R)+'" y2="'+(H-B)+'" stroke="#64748b"/><text x="'+(L+PW/2)+'" y="'+(H-8)+'" text-anchor="middle" font-size="13" fill="#17243a">pH</text>';
+ let legend=[],ci=0;
+ fs.forEach(f=>{const count=f.pka.length+1;for(let j=0;j<count;j++){const color=colors[ci%colors.length];ci++;let points=[];for(let k=0;k<=280;k++){const p=14*k/280,h=10**(-p),a=distribution(f,h),xx=x(p),yy=y(a[j]);points.push(xx.toFixed(1)+','+yy.toFixed(1));}svg+='<polyline points="'+points.join(' ')+'" fill="none" stroke="'+color+'" stroke-width="2.6" stroke-linejoin="round" stroke-linecap="round"/>';legend.push({label:speciesLabel(f,j),color});}});
+ svg+='</svg><div style="display:flex;flex-wrap:wrap;gap:8px 16px;margin-top:8px">';
+ legend.forEach(it=>{svg+='<span style="display:inline-flex;align-items:center;gap:6px;font-size:.85rem;color:#334155"><i style="display:inline-block;width:19px;height:3px;background:'+it.color+'"></i>'+escapeText(it.label)+'</span>';});
+ svg+='</div>';$('distributionChart').innerHTML=svg;
+}
+function escapeText(s){return String(s).replace(/[&<>"']/g,ch=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]));}
 function calculate(){
  if(!$('count'))return;const fs=families(),r=solve(fs);
- if(!r){$('ph').textContent='—';$('hconc').textContent='—';$('status').textContent='Non résolu';$('species').innerHTML='<p>Impossible de trouver une solution dans le domaine numérique choisi. Vérifie les paramètres.</p>';return;}
+ if(!r){$('ph').textContent='—';$('hconc').textContent='—';$('status').textContent='Non résolu';$('species').innerHTML='<p>Impossible de trouver une solution dans le domaine numérique choisi. Vérifie les paramètres.</p>';drawDistributionChart(fs);return;}
  $('ph').textContent=r.pH.toFixed(3).replace('.',',');$('hconc').textContent=fmt(r.h);$('status').textContent='Convergent';
  let html='';
  fs.forEach((f,k)=>{const a=distribution(f,r.h);html+='<article><strong>'+f.name+'</strong><div class="muted">C totale = '+f.C.toFixed(3).replace('.',',')+' mol·L⁻¹</div>';a.forEach((v,j)=>{const label=mode==='poly'?'H'+(f.pka.length-j?f.pka.length-j:'')+'A'+(j?' '+('−'.repeat(j)):''):(j===0?'HA':'A⁻');html+='<div style="margin-top:7px;font-size:.88rem">'+label+' : '+(100*v).toFixed(2).replace('.',',')+' % <div class="bar"><span style="width:'+(100*v)+'%"></span></div></div>';});html+='</article>';});
- $('species').innerHTML=html;$('explain').textContent='Résolution par dichotomie du bilan d’électroneutralité. Les concentrations des formes acido-basiques sont calculées à partir des fractions de distribution de chaque famille.';
+ $('species').innerHTML=html;drawDistributionChart(fs);$('explain').textContent='Résolution par dichotomie du bilan d’électroneutralité. Les concentrations des formes acido-basiques sont calculées à partir des fractions de distribution de chaque famille.';
 }
 function setMode(m){mode=m;$('tabPoly').classList.toggle('active',m==='poly');$('tabMix').classList.toggle('active',m==='mix');$('modeHelp').textContent=m==='poly'?'Un seul système polyacide HₙA, avec plusieurs dissociations successives.':'Plusieurs couples monoprotés indépendants, chacun avec sa concentration et son degré de neutralisation.';renderControls();calculate();}
 $('tabPoly').onclick=()=>setMode('poly');$('tabMix').onclick=()=>setMode('mix');$('calculate').onclick=calculate;
