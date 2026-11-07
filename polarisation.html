@@ -20,9 +20,9 @@ canvas{display:block;width:100%;height:440px;background:#fbfdff;border:1px solid
 <main>
 <section class="panel">
 <h2>Réglages de l'expérience</h2>
-<p class="lead">La lumière incidente est supposée déjà polarisée rectilignement. On fait varier l'angle α entre sa direction de polarisation et l'axe de transmission du polariseur.</p>
+<p class="lead">La lumière incidente est non polarisée : la direction du champ électrique varie aléatoirement dans le plan transverse. Le polariseur sélectionne ensuite une direction unique.</p>
 <div class="controls">
-<div class="control"><label for="angle">Angle α <output id="angleOut">30°</output></label><input id="angle" type="range" min="0" max="90" step="1" value="30"><div class="hint">0° : axes parallèles ; 90° : axes croisés.</div></div>
+<div class="control"><label for="randomRate">Fréquence des variations aléatoires <output id="randomRateOut">4 / s</output></label><input id="randomRate" type="range" min="1" max="12" step="1" value="4"><div class="hint">Contrôle la rapidité des changements de direction de E et B.</div></div>
 <div class="control"><label for="speed">Vitesse de propagation animée <output id="speedOut">1,0</output></label><input id="speed" type="range" min=".2" max="2" step=".1" value="1"><div class="hint">Modifie la vitesse de défilement de l'onde.</div></div>
 </div>
 <div class="actions"><button id="play">Pause</button><button class="secondary" id="reset">Réinitialiser</button></div>
@@ -36,70 +36,62 @@ canvas{display:block;width:100%;height:440px;background:#fbfdff;border:1px solid
 </div>
 <canvas id="wave" aria-label="Animation des champs électrique et magnétique avant et après le polariseur"></canvas>
 <div class="metrics">
-<div class="metric"><small>Angle entre les axes</small><strong id="angleMetric">30°</strong></div>
-<div class="metric"><small>Intensité transmise I/I₀</small><strong id="intensity">0,75</strong></div>
+<div class="metric"><small>Polarisation incidente</small><strong>Aléatoire</strong></div>
+<div class="metric"><small>Intensité moyenne I/I₀</small><strong id="intensity">0,50</strong></div>
 <div class="metric"><small>État de la lumière après</small><strong id="state">Rectiligne</strong></div>
 </div>
-<div class="note" id="explain">Le polariseur sélectionne la composante de E parallèle à son axe. Après le polariseur, E oscille selon une direction unique.</div>
+<div class="note" id="explain">Avant : directions de E et B aléatoires. Après : E et B oscillent selon deux directions fixes et perpendiculaires.</div>
 </section>
 <section class="panel">
 <h2>Interprétation physique</h2>
 <p>Dans une onde électromagnétique plane, les trois directions sont perpendiculaires :</p>
 <p class="eq">\(\vec E \perp \vec B,\quad \vec E \perp \vec u,\quad \vec B \perp \vec u\)</p>
-<p>Le polariseur ne « bloque » pas le champ électrique en entier : il transmet sa projection sur son axe. Le champ transmis est donc dirigé suivant cet axe. Le champ magnétique transmis reste perpendiculaire au champ électrique et à la propagation.</p>
-<p class="eq">Loi de Malus : \(I=I_0\cos^2(\alpha)\)</p>
-<p class="hint">Le dessin représente les deux champs en perspective : les courbes rouge et bleue correspondent à deux directions transverses perpendiculaires. La longueur d'onde et les amplitudes sont schématiques ; l'intensité affichée suit la loi de Malus.</p>
+<p>Pour une lumière non polarisée, la direction de E fluctue aléatoirement dans le plan transverse. Le champ B fluctue simultanément et reste perpendiculaire à E. Le polariseur ne transmet que la projection de E sur son axe : après le polariseur, la lumière est polarisée rectilignement.</p>
+<p class="eq">Pour une lumière non polarisée : \(I_{transmise}=\frac{I_0}{2}\) en moyenne.</p>
+<p class="hint">Le dessin représente les deux champs en perspective. Avant le polariseur, leur orientation transverse change aléatoirement ; après, les directions sont fixes. La valeur moyenne transmise par un polariseur idéal est I₀/2.</p>
 </section>
 </main>
-<script>
-const $=id=>document.getElementById(id),c=$('wave'),ctx=c.getContext('2d');
-let phase=0,last=0,running=true,raf=0;
-const rad=d=>d*Math.PI/180,fmt=(x,n=2)=>x.toFixed(n).replace('.',',');
+<script>const $=id=>document.getElementById(id),c=$('wave'),ctx=c.getContext('2d');
+let phase=0,last=0,running=true,raf=0,angle=0,randomClock=0;
+const fmt=(x,n=2)=>x.toFixed(n).replace('.',',');
 function resize(){const d=window.devicePixelRatio||1,w=c.clientWidth,h=c.clientHeight;c.width=w*d;c.height=h*d;ctx.setTransform(d,0,0,d,0,0);draw();}
 function project(x,y,z){return {x:x+y*.58,y:z-y*.34};}
 function line(a,b,color,width=1.5,dash=[]){ctx.beginPath();ctx.setLineDash(dash);ctx.moveTo(a.x,a.y);ctx.lineTo(b.x,b.y);ctx.strokeStyle=color;ctx.lineWidth=width;ctx.stroke();ctx.setLineDash([]);}
 function arrow(a,b,color,label){line(a,b,color,2);const ang=Math.atan2(b.y-a.y,b.x-a.x),s=8;ctx.beginPath();ctx.moveTo(b.x,b.y);ctx.lineTo(b.x-s*Math.cos(ang-.45),b.y-s*Math.sin(ang-.45));ctx.lineTo(b.x-s*Math.cos(ang+.45),b.y-s*Math.sin(ang+.45));ctx.closePath();ctx.fillStyle=color;ctx.fill();ctx.fillStyle=color;ctx.font='bold 13px system-ui';ctx.fillText(label,b.x+6,b.y-5);}
-function wavePath(x0,x1,y0,angle,kind,amplitude,ph,color){
- const v={y:Math.sin(angle),z:Math.cos(angle)},b={y:-Math.cos(angle),z:Math.sin(angle)};
+function wavePath(x0,x1,y0,ang,kind,amp,ph,color){
+ const v={y:Math.sin(ang),z:Math.cos(ang)},b={y:-Math.cos(ang),z:Math.sin(ang)},dir=kind==='E'?v:b;
  ctx.beginPath();let started=false;
- for(let x=x0;x<=x1;x+=2){const q=Math.sin((x-x0)*.055-ph)*amplitude,dir=kind==='E'?v:b,p=project(x,y0+q*dir.y,q*dir.z);if(!started){ctx.moveTo(p.x,p.y);started=true}else ctx.lineTo(p.x,p.y);}
- ctx.strokeStyle=color;ctx.lineWidth=2.7;ctx.stroke();
+ for(let x=x0;x<=x1;x+=2){const q=Math.sin((x-x0)*.055-ph)*amp,p=project(x,y0+q*dir.y,q*dir.z);if(!started){ctx.moveTo(p.x,p.y);started=true}else ctx.lineTo(p.x,p.y);}
+ ctx.strokeStyle=color;ctx.lineWidth=2.8;ctx.stroke();
 }
 function draw(){
- const w=c.clientWidth,h=c.clientHeight;if(!w||!h)return;
- ctx.clearRect(0,0,w,h);
- const alpha=rad(+$('angle').value),x0=42,xpol=w*.51,xend=w-28,mid=h*.56;
- // labels and propagation axis
- ctx.fillStyle='#17243a';ctx.font='bold 14px system-ui';ctx.fillText('AVANT LE POLARISEUR',x0,25);ctx.fillText('APRÈS LE POLARISEUR',xpol+18,25);
- const p1=project(x0,0,0),p2=project(xend,0,0);arrow(p1,p2,'#475569','propagation');
- // transverse reference axes, before
- const base=project(x0+12,0,0);line(base,project(x0+12,0,62),'#dc2626',1.4,[4,4]);line(base,project(x0+12,62,0),'#2563eb',1.4,[4,4]);
- // polarizer plane
+ const w=c.clientWidth,h=c.clientHeight;if(!w||!h)return;ctx.clearRect(0,0,w,h);
+ const x0=42,xpol=w*.51,xend=w-28,mid=h*.55,amp=48,projection=Math.cos(angle);
+ ctx.fillStyle='#17243a';ctx.font='bold 14px system-ui';ctx.fillText('LUMIÈRE NON POLARISÉE',x0,25);ctx.fillText('LUMIÈRE POLARISÉE',xpol+13,25);
+ arrow(project(x0,0,0),project(xend,0,0),'#475569','propagation');
  ctx.fillStyle='rgba(15,118,110,.10)';ctx.fillRect(xpol-7,45,14,h-83);ctx.strokeStyle='#0f766e';ctx.lineWidth=2;ctx.strokeRect(xpol-7,45,14,h-83);
- ctx.save();ctx.translate(xpol+19,h*.34);ctx.rotate(Math.PI/2);ctx.fillStyle='#0f766e';ctx.font='bold 12px system-ui';ctx.fillText('POLARISEUR',0,0);ctx.restore();
- // incoming field direction and outgoing axis
- const inAngle=alpha, outAngle=0,amp=48;
- wavePath(x0,xpol-12,mid,inAngle,'E',amp,phase,'#dc2626');
- wavePath(x0,xpol-12,mid,inAngle,'B',amp,phase,'#2563eb');
- wavePath(xpol+13,xend,mid,outAngle,'E',amp*Math.cos(alpha),phase,'#dc2626');
- wavePath(xpol+13,xend,mid,outAngle,'B',amp*Math.cos(alpha),phase,'#2563eb');
- // vector snapshots at same phase, left and right
- function vectors(x,ang,scale){
-  const q=Math.sin(-phase)*scale,yy=Math.sin(ang),zz=Math.cos(ang),by=-Math.cos(ang),bz=Math.sin(ang);
-  const o=project(x,0,0),e=project(x,q*yy,q*zz),b=project(x,q*by,q*bz);
+ line(project(xpol,0,-54),project(xpol,0,54),'#0f766e',3);
+ ctx.save();ctx.translate(xpol+18,h*.32);ctx.rotate(Math.PI/2);ctx.fillStyle='#0f766e';ctx.font='bold 12px system-ui';ctx.fillText('POLARISEUR',0,0);ctx.restore();
+ wavePath(x0,xpol-12,mid,angle,'E',amp,phase,'#dc2626');
+ wavePath(x0,xpol-12,mid,angle,'B',amp,phase,'#2563eb');
+ wavePath(xpol+13,xend,mid,0,'E',amp*projection,phase,'#dc2626');
+ wavePath(xpol+13,xend,mid,0,'B',amp*projection,phase,'#2563eb');
+ function vectorSnapshot(x,ang,scale){
+  const q=Math.sin(-phase)*scale,ey=Math.sin(ang),ez=Math.cos(ang),by=-Math.cos(ang),bz=Math.sin(ang);
+  const o=project(x,0,0),e=project(x,q*ey,q*ez),b=project(x,q*by,q*bz);
   arrow(o,e,'#dc2626','E');arrow(o,b,'#2563eb','B');
  }
- vectors(x0+90,inAngle,amp);vectors(Math.min(xpol+95,xend-55),outAngle,amp*Math.cos(alpha));
- // axis direction marker on polarizer, viewed in transverse plane
- const axisTop=project(xpol,0,55),axisBottom=project(xpol,0,-55);line(axisTop,axisBottom,'#0f766e',3);
- ctx.fillStyle='#0f766e';ctx.font='12px system-ui';ctx.fillText('axe de transmission',Math.max(8,xpol-65),h-15);
- ctx.fillStyle='#64748b';ctx.font='12px system-ui';ctx.fillText('E et B perpendiculaires',x0, h-15);
- const I=Math.cos(alpha)**2;$('angleOut').textContent=$('angle').value+'°';$('angleMetric').textContent=$('angle').value+'°';$('intensity').textContent=fmt(I,3);$('state').textContent=I<.0001?'Éteinte':'Rectiligne';
- $('explain').textContent=I<.0001?'Polariseur croisé : la direction incidente est perpendiculaire à l’axe. Dans le modèle idéal, aucune lumière n’est transmise.':'Le champ E transmis est parallèle à l’axe du polariseur. Son amplitude est multipliée par cos(α) et son intensité par cos²(α).';
+ vectorSnapshot(x0+82,angle,amp);
+ vectorSnapshot(Math.min(xpol+88,xend-58),0,amp*projection);
+ ctx.fillStyle='#0f766e';ctx.font='12px system-ui';ctx.fillText('axe de transmission',Math.max(8,xpol-66),h-15);
+ ctx.fillStyle='#64748b';ctx.fillText('E et B changent aléatoirement de direction',x0,h-15);
+ $('randomRateOut').textContent=$('randomRate').value+' / s';
+ $('intensity').textContent='0,50';$('state').textContent='Rectiligne';
+ $('explain').textContent='Le champ incident change de direction de façon aléatoire. Le polariseur ne transmet que sa projection sur son axe : après le polariseur, E garde une direction fixe. B reste perpendiculaire.';
 }
-function animate(t){if(!running)return;if(last)phase+=(t-last)*.001*(+$('speed').value);last=t;draw();raf=requestAnimationFrame(animate);}
-$('angle').addEventListener('input',draw);$('speed').addEventListener('input',()=>{$('speedOut').textContent=fmt(+$('speed').value,1);});
+function animate(t){if(!running)return;if(last){const dt=Math.min(60,t-last);phase+=dt*.001*(+$('speed').value);randomClock+=dt;const interval=1000/(+$('randomRate').value);if(randomClock>=interval){randomClock=0;angle=Math.random()*Math.PI*2;}}last=t;draw();raf=requestAnimationFrame(animate);}
+$('randomRate').addEventListener('input',draw);
+$('speed').addEventListener('input',()=>{$('speedOut').textContent=fmt(+$('speed').value,1);});
 $('play').addEventListener('click',()=>{running=!running;$('play').textContent=running?'Pause':'Reprendre';last=0;if(running)raf=requestAnimationFrame(animate);else cancelAnimationFrame(raf);});
-$('reset').addEventListener('click',()=>{$('angle').value=30;$('speed').value=1;$('speedOut').textContent='1,0';phase=0;draw();});
-window.addEventListener('resize',resize);$('speedOut').textContent='1,0';resize();raf=requestAnimationFrame(animate);
-</script></body></html>
+$('reset').addEventListener('click',()=>{$('randomRate').value=4;$('speed').value=1;$('speedOut').textContent='1,0';angle=Math.random()*Math.PI*2;phase=0;draw();});
+window.addEventListener('resize',resize);$('speedOut').textContent='1,0';angle=Math.random()*Math.PI*2;resize();raf=requestAnimationFrame(animate);</script></body></html>
