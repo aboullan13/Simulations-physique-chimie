@@ -57,7 +57,7 @@ function update(){
  $('angleOut').textContent=fmt(i);$('n1Out').textContent=n1.toFixed(2).replace('.',',');$('n2Out').textContent=n2.toFixed(2).replace('.',',');
  $('critical').textContent=critical===null?'—':fmt(critical);$('refracted').textContent=total?'—':fmt(r);$('reflected').textContent=fmt(i);
  $('status').className='status'+(total?' total':'');
- $('status').textContent=total?'Réflexion totale : l’angle d’incidence dépasse l’angle limite. Aucun rayon réfracté ne se propage dans le second milieu.':(critical!==null?'Réfraction : augmente l’angle jusqu’à l’angle limite ('+fmt(critical)+') pour observer le rayon réfracté devenir rasant.':'Réfraction : le rayon passe dans le second milieu. Ici n₁ ≤ n₂, il n’y a pas d’angle limite pour une incidence depuis le milieu 1.';
+ $('status').textContent=total?'Réflexion totale : l’angle d’incidence dépasse l’angle limite. Aucun rayon réfracté ne se propage dans le second milieu.':(critical!==null?'Réfraction : augmente l’angle jusqu’à l’angle limite ('+fmt(critical)+') pour observer le rayon réfracté devenir rasant.':'Réfraction : le rayon passe dans le second milieu. Ici n₁ ≤ n₂, il n’y a pas d’angle limite pour une incidence depuis le milieu 1.');
  draw(i,n1,n2,r,total,critical);
 }
 function draw(i,n1,n2,r,total,critical){
