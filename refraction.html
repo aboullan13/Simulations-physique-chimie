@@ -1,0 +1,87 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Réfraction et réflexion totale | Physique-Chimie</title>
+<style>
+:root{--ink:#17243a;--muted:#64748b;--line:#dbe3ee;--blue:#2563eb;--red:#dc5b48;--teal:#0f766e;--paper:#f4f7fb}
+*{box-sizing:border-box}body{margin:0;background:var(--paper);color:var(--ink);font:16px/1.5 system-ui,-apple-system,Segoe UI,Roboto,sans-serif}
+header{background:linear-gradient(120deg,#102a56,#2459a6);color:#fff;padding:24px 18px}header .wrap,main{max-width:1100px;margin:auto}h1{margin:0;font-size:clamp(1.45rem,4vw,2rem)}header p{margin:5px 0 0;color:#dbeafe}.nav{display:flex;gap:16px;flex-wrap:wrap;margin-top:12px}.nav a{color:#eaf2ff;text-decoration:none;font-weight:650}
+main{padding:22px 16px 42px}.panel{background:#fff;border:1px solid var(--line);border-radius:16px;padding:18px;margin-bottom:16px;box-shadow:0 5px 20px #1e3a5f0a}
+h2{font-size:1.15rem;margin:0 0 12px}.lead{color:var(--muted);margin:0 0 14px}.layout{display:grid;grid-template-columns:300px 1fr;gap:16px}.control{margin:17px 0}.control label{display:flex;justify-content:space-between;gap:10px;font-weight:650}.control output{color:var(--blue);font-variant-numeric:tabular-nums}input[type=range]{width:100%;accent-color:var(--blue);margin-top:10px}
+.metrics{display:grid;grid-template-columns:repeat(3,1fr);gap:9px;margin-bottom:12px}.metric{background:#f1f6ff;border-radius:11px;padding:10px}.metric small{display:block;color:var(--muted)}.metric strong{font-size:1.2rem;font-variant-numeric:tabular-nums}
+.stage{border:1px solid var(--line);border-radius:12px;overflow:hidden;background:#f8fbff}canvas{display:block;width:100%;height:390px;touch-action:pan-y}.legend{display:flex;flex-wrap:wrap;gap:14px;font-size:.84rem;color:var(--muted);padding:8px 10px}.key{display:inline-block;width:20px;height:3px;vertical-align:middle;margin-right:5px}.actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}button{border:0;border-radius:10px;padding:10px 15px;background:var(--blue);color:white;font-weight:650;cursor:pointer}button.secondary{background:#e9eff8;color:var(--ink)}button:focus-visible,input:focus-visible{outline:3px solid #93c5fd;outline-offset:2px}
+.status{margin-top:12px;padding:12px 14px;border-radius:10px;background:#eff6ff;border-left:4px solid var(--blue)}.status.total{background:#fff7ed;border-color:#ea580c}.formula{font-family:Georgia,serif;font-size:1.08rem}.hint{font-size:.88rem;color:var(--muted)}.selectrow{display:flex;gap:8px;align-items:center}.selectrow select{width:100%;padding:9px;border:1px solid var(--line);border-radius:9px;background:#fff;color:var(--ink)}
+@media(max-width:760px){.layout{grid-template-columns:1fr}canvas{height:320px}.metrics{grid-template-columns:repeat(3,1fr)}}@media(max-width:430px){.metrics{grid-template-columns:1fr 1fr}.metric:last-child{grid-column:span 2}}
+</style>
+</head>
+<body>
+<header><div class="wrap"><h1>Réfraction et réflexion totale</h1><p>Une expérience d'optique géométrique interactive</p><nav class="nav"><a href="index.html">← Accueil</a><a href="ph.html">Calculateur de pH</a><a href="spectres.html">Spectres IR / RMN</a></nav></div></header>
+<main>
+<section class="panel"><h2>Manipuler le rayon lumineux</h2><p class="lead">Fais varier l'angle d'incidence et observe la direction du rayon réfracté. Le réglage initial correspond à un rayon qui passe du verre vers l'air : la réflexion totale est donc possible.</p>
+<div class="layout">
+<aside>
+<div class="control"><label for="angle">Angle d'incidence <output id="angleOut">30,0°</output></label><input id="angle" type="range" min="0" max="89" step=".1" value="30"></div>
+<div class="control"><label for="n1">Indice du milieu incident n₁ <output id="n1Out">1,50</output></label><input id="n1" type="range" min="1" max="2.5" step=".01" value="1.5"></div>
+<div class="control"><label for="n2">Indice du second milieu n₂ <output id="n2Out">1,00</output></label><input id="n2" type="range" min="1" max="2.5" step=".01" value="1"></div>
+<div class="actions"><button id="play">▶ Animer l'angle</button><button class="secondary" id="reset">Réinitialiser</button></div>
+<p class="hint">L'animation fait varier progressivement l'angle entre 0° et 89°. Tu peux la mettre en pause à tout moment.</p>
+</aside>
+<div>
+<div class="metrics">
+<div class="metric"><small>Angle limite</small><strong id="critical">41,8°</strong></div>
+<div class="metric"><small>Angle réfracté</small><strong id="refracted">48,6°</strong></div>
+<div class="metric"><small>Angle réfléchi</small><strong id="reflected">30,0°</strong></div>
+</div>
+<div class="stage"><canvas id="optics" aria-label="Schéma animé de réfraction et de réflexion totale"></canvas><div class="legend"><span><i class="key" style="background:#dc5b48"></i>Rayon incident</span><span><i class="key" style="background:#2563eb"></i>Rayon réfléchi</span><span><i class="key" style="background:#0f766e"></i>Rayon réfracté</span></div></div>
+<div id="status" class="status">Le rayon est réfracté dans le second milieu.</div>
+</div>
+</div></section>
+<section class="panel"><h2>À retenir</h2>
+<p class="formula">n₁ sin(i) = n₂ sin(r)</p>
+<p>La loi de Snell-Descartes relie l'angle d'incidence i et l'angle de réfraction r, mesurés par rapport à la normale à la surface de séparation.</p>
+<p>Lorsque n₁ est supérieur à n₂, l'angle limite vérifie :</p><p class="formula">sin(iₗ) = n₂ / n₁</p>
+<p>Pour i supérieur à iₗ, il n'existe plus de rayon réfracté propagatif : toute la lumière est réfléchie dans le premier milieu (réflexion totale).</p>
+<p class="hint">Modèle de rayons lumineux dans des milieux transparents, homogènes et isotropes. Les indices sont supposés indépendants de la longueur d'onde.</p>
+</section>
+</main>
+<script>
+const $=id=>document.getElementById(id), canvas=$('optics'),ctx=canvas.getContext('2d');
+let running=false,raf=0,last=0,phase=0;
+const rad=x=>x*Math.PI/180,deg=x=>x*180/Math.PI,fmt=x=>x.toFixed(1).replace('.',',')+'°';
+function values(){return {i:+$('angle').value,n1:+$('n1').value,n2:+$('n2').value};}
+function update(){
+ const {i,n1,n2}=values(),critical=n1>n2?deg(Math.asin(n2/n1)):null,total=critical!==null&&i>=critical;
+ const r=total?null:deg(Math.asin(Math.min(1,n1/n2*Math.sin(rad(i)))));
+ $('angleOut').textContent=fmt(i);$('n1Out').textContent=n1.toFixed(2).replace('.',',');$('n2Out').textContent=n2.toFixed(2).replace('.',',');
+ $('critical').textContent=critical===null?'—':fmt(critical);$('refracted').textContent=total?'—':fmt(r);$('reflected').textContent=fmt(i);
+ $('status').className='status'+(total?' total':'');
+ $('status').textContent=total?'Réflexion totale : l’angle d’incidence dépasse l’angle limite. Aucun rayon réfracté ne se propage dans le second milieu.':(critical!==null?'Réfraction : augmente l’angle jusqu’à l’angle limite ('+fmt(critical)+') pour observer le rayon réfracté devenir rasant.':'Réfraction : le rayon passe dans le second milieu. Ici n₁ ≤ n₂, il n’y a pas d’angle limite pour une incidence depuis le milieu 1.'));
+ draw(i,n1,n2,r,total,critical);
+}
+function draw(i,n1,n2,r,total,critical){
+ const dpr=window.devicePixelRatio||1,w=canvas.clientWidth,h=canvas.clientHeight;canvas.width=Math.round(w*dpr);canvas.height=Math.round(h*dpr);ctx.setTransform(dpr,0,0,dpr,0,0);
+ const cx=w/2,cy=h*.52,L=Math.min(w*.39,250),rayLen=Math.min(h*.42,155);
+ ctx.clearRect(0,0,w,h);
+ // media
+ ctx.fillStyle='#eaf3ff';ctx.fillRect(0,0,w,cy);ctx.fillStyle='#fff4e9';ctx.fillRect(0,cy,w,h-cy);
+ ctx.strokeStyle='#64748b';ctx.lineWidth=2;ctx.beginPath();ctx.moveTo(0,cy);ctx.lineTo(w,cy);ctx.stroke();
+ ctx.save();ctx.setLineDash([6,5]);ctx.strokeStyle='#64748b';ctx.lineWidth=1.5;ctx.beginPath();ctx.moveTo(cx,15);ctx.lineTo(cx,h-12);ctx.stroke();ctx.restore();
+ ctx.fillStyle='#334155';ctx.font='600 13px system-ui';ctx.fillText('Milieu 2  (n₂ = '+n2.toFixed(2)+')',14,24);ctx.fillText('Milieu 1  (n₁ = '+n1.toFixed(2)+')',14,h-17);ctx.fillText('normale',cx+8,24);ctx.fillText('dioptre',w-58,cy-9);
+ function line(angle,side,color,label){const a=rad(angle),dx=Math.sin(a)*rayLen,dy=Math.cos(a)*rayLen;let x1,y1,x2,y2;if(side==='incident'){x1=cx-dx;y1=cy+dy;x2=cx;y2=cy;}else if(side==='reflected'){x1=cx;y1=cy;x2=cx+dx;y2=cy+dy;}else{x1=cx;y1=cy;x2=cx+Math.sin(a)*L;y2=cy-Math.cos(a)*L;}ctx.strokeStyle=color;ctx.lineWidth=3;ctx.beginPath();ctx.moveTo(x1,y1);ctx.lineTo(x2,y2);ctx.stroke();const t=(phase%1);let px,py;if(side==='incident'){px=x1+(x2-x1)*t;py=y1+(y2-y1)*t;}else{px=x1+(x2-x1)*t;py=y1+(y2-y1)*t;}ctx.fillStyle=color;ctx.beginPath();ctx.arc(px,py,4.2,0,Math.PI*2);ctx.fill();arrow(x2,y2,Math.atan2(y2-y1,x2-x1),color);if(label){ctx.fillStyle=color;ctx.font='600 12px system-ui';ctx.fillText(label,Math.max(6,Math.min(w-100,(x1+x2)/2+7)),(y1+y2)/2);}}
+ function arrow(x,y,a,color){ctx.fillStyle=color;ctx.beginPath();ctx.moveTo(x,y);ctx.lineTo(x-10*Math.cos(a-.45),y-10*Math.sin(a-.45));ctx.lineTo(x-10*Math.cos(a+.45),y-10*Math.sin(a+.45));ctx.closePath();ctx.fill();}
+ line(i,'incident','#dc5b48','incident');line(i,'reflected','#2563eb','réfléchi');if(!total)line(r,'refracted','#0f766e','réfracté');
+ // angle arcs, both measured from normal
+ ctx.strokeStyle='#475569';ctx.lineWidth=1.5;ctx.beginPath();ctx.arc(cx,cy,31,rad(90),rad(90+i),false);ctx.stroke();ctx.beginPath();ctx.arc(cx,cy,31,rad(-90),rad(-90+i),true);ctx.stroke();
+ ctx.fillStyle='#334155';ctx.font='12px system-ui';ctx.fillText('i',cx-43,cy+38);ctx.fillText('i',cx+38,cy+38);if(!total)ctx.fillText('r',cx+35,cy-36);
+ if(total){ctx.setLineDash([4,4]);ctx.strokeStyle='#0f766e';ctx.beginPath();ctx.moveTo(cx,cy);ctx.lineTo(cx+L,cy);ctx.stroke();ctx.setLineDash([]);ctx.fillStyle='#0f766e';ctx.fillText('direction limite (r = 90°)',cx+8,cy-9);}
+}
+function animate(t){if(!running)return;if(!last)last=t;const dt=Math.min(50,t-last);last=t;phase+=dt/850;let a=+ $('angle').value+.035*dt;if(a>89)a=0;$('angle').value=a;update();raf=requestAnimationFrame(animate);}
+$('angle').addEventListener('input',()=>{if(running)stop();update();});$('n1').addEventListener('input',update);$('n2').addEventListener('input',update);
+function stop(){running=false;cancelAnimationFrame(raf);$('play').textContent='▶ Animer l’angle';last=0;}
+$('play').addEventListener('click',()=>{if(running){stop();}else{running=true;$('play').textContent='Ⅱ Pause';raf=requestAnimationFrame(animate);}});
+$('reset').addEventListener('click',()=>{stop();$('angle').value=30;$('n1').value=1.5;$('n2').value=1;phase=0;update();});
+window.addEventListener('resize',update);update();
+</script>
+</body></html>
