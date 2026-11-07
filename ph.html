@@ -26,12 +26,13 @@ function renderControls(){
  const n=readSlider('count');
  let out='<div class="grid">'+slider('count',mode==='poly'?'Nombre de dissociations':'Nombre de couples',n,1,mode==='poly'?4:5,1)+'</div><div class="grid" id="families">';
  if(mode==='poly'){
+  out+='<div class="field"><label for="acidName">Nom de l\'acide</label><input type="text" id="acidName" value="Acide polyprotique" placeholder="Ex. acide phosphorique"></div>';
   out+='<div class="field"><label for="conc0">Concentration analytique totale</label><input type="range" id="conc0" min=".001" max=".5" step=".001" value=".05"><output id="conc0Out">0,050 mol·L⁻¹</output></div>';
   out+='<div class="field"><label for="neutral0">Degré de neutralisation moyen</label><input type="range" id="neutral0" min="0" max="'+n+'" step=".01" value="0"><output id="neutral0Out">0,00 équiv.</output></div>';
-  for(let i=0;i<n;i++)out+='<div class="field"><label for="pka'+i+'">pKₐ '+(i+1)+' <output id="pka'+i+'Out">'+[2.1,7.2,12.3,13.5][i]+'</output></label><input type="range" id="pka'+i+'" min="0" max="14" step=".1" value="'+[2.1,7.2,12.3,13.5][i]+'"></div>';
+  for(let i=0;i<n;i++)out+='<div class="field"><label for="pka'+i+'">pKₐ de la dissociation '+(i+1)+' <output id="pka'+i+'Out">'+[2.1,7.2,12.3,13.5][i]+'</output></label><input type="range" id="pka'+i+'" min="0" max="14" step=".1" value="'+[2.1,7.2,12.3,13.5][i]+'"></div>';
  }else{
   for(let i=0;i<n;i++){
-   out+='<div class="field"><strong>Couple '+(i+1)+'</strong><label for="pka'+i+'">pKₐ <output id="pka'+i+'Out">'+[4.8,9.2,3.8,6.4,10.3][i]+'</output></label><input type="range" id="pka'+i+'" min="0" max="14" step=".1" value="'+[4.8,9.2,3.8,6.4,10.3][i]+'"><label for="conc'+i+'" style="margin-top:8px">Concentration totale <output id="conc'+i+'Out">0,050 mol·L⁻¹</output></label><input type="range" id="conc'+i+'" min=".001" max=".5" step=".001" value=".05"><label for="neutral'+i+'" style="margin-top:8px">Neutralisation <output id="neutral'+i+'Out">0,00 équiv.</output></label><input type="range" id="neutral'+i+'" min="0" max="1" step=".01" value="0"></div>';
+   out+='<div class="field"><strong>Couple '+(i+1)+'</strong><label for="name'+i+'" style="margin-top:8px">Nom du couple</label><input type="text" id="name'+i+'" value="'+['Acide éthanoïque / éthanoate','Ion ammonium / ammoniaque','Acide méthanoïque / méthanoate','Acide carbonique / hydrogénocarbonate','Eau / ion hydroxyde'][i]+'" placeholder="Ex. AH / A⁻"><label for="pka'+i+'" style="margin-top:8px">pKₐ <output id="pka'+i+'Out">'+[4.8,9.2,3.8,6.4,10.3][i]+'</output></label><input type="range" id="pka'+i+'" min="0" max="14" step=".1" value="'+[4.8,9.2,3.8,6.4,10.3][i]+'"><label for="conc'+i+'" style="margin-top:8px">Concentration totale <output id="conc'+i+'Out">0,050 mol·L⁻¹</output></label><input type="range" id="conc'+i+'" min=".001" max=".5" step=".001" value=".05"><label for="neutral'+i+'" style="margin-top:8px">Degré de neutralisation <output id="neutral'+i+'Out">0,00 équiv.</output></label><input type="range" id="neutral'+i+'" min="0" max="1" step=".01" value="0"></div>';
   }
  }
  out+='</div>'; $('controls').innerHTML=out;
@@ -42,8 +43,8 @@ function families(){
  const n=readSlider('count'),arr=[];
  if(mode==='poly'){
   const pk=[];for(let i=0;i<n;i++)pk.push(readSlider('pka'+i));
-  arr.push({name:'H'+(n>1?n:'')+'A',pka:pk,C:readSlider('conc0'),neutral:readSlider('neutral0')});
- }else for(let i=0;i<n;i++)arr.push({name:'Couple '+(i+1),pka:[readSlider('pka'+i)],C:readSlider('conc'+i),neutral:readSlider('neutral'+i)});
+  arr.push({name:$('acidName').value||'Acide polyprotique',pka:pk,C:readSlider('conc0'),neutral:readSlider('neutral0')});
+ }else for(let i=0;i<n;i++)arr.push({name:$('name'+i).value||'Couple '+(i+1),pka:[readSlider('pka'+i)],C:readSlider('conc'+i),neutral:readSlider('neutral'+i)});
  return arr;
 }
 function distribution(f,h){
@@ -65,7 +66,7 @@ function calculate(){
  if(!r){$('ph').textContent='—';$('hconc').textContent='—';$('status').textContent='Non résolu';$('species').innerHTML='<p>Impossible de trouver une solution dans le domaine numérique choisi. Vérifie les paramètres.</p>';return;}
  $('ph').textContent=r.pH.toFixed(3).replace('.',',');$('hconc').textContent=fmt(r.h);$('status').textContent='Convergent';
  let html='';
- fs.forEach((f,k)=>{const a=distribution(f,r.h);html+='<article><strong>'+(mode==='poly'?'Famille HₙA':'Couple '+(k+1))+'</strong><div class="muted">C totale = '+f.C.toFixed(3).replace('.',',')+' mol·L⁻¹</div>';a.forEach((v,j)=>{const label=mode==='poly'?'H'+(f.pka.length-j?f.pka.length-j:'')+'A'+(j?' '+('−'.repeat(j)):''):(j===0?'HA':'A⁻');html+='<div style="margin-top:7px;font-size:.88rem">'+label+' : '+(100*v).toFixed(2).replace('.',',')+' % <div class="bar"><span style="width:'+(100*v)+'%"></span></div></div>';});html+='</article>';});
+ fs.forEach((f,k)=>{const a=distribution(f,r.h);html+='<article><strong>'+f.name+'</strong><div class="muted">C totale = '+f.C.toFixed(3).replace('.',',')+' mol·L⁻¹</div>';a.forEach((v,j)=>{const label=mode==='poly'?'H'+(f.pka.length-j?f.pka.length-j:'')+'A'+(j?' '+('−'.repeat(j)):''):(j===0?'HA':'A⁻');html+='<div style="margin-top:7px;font-size:.88rem">'+label+' : '+(100*v).toFixed(2).replace('.',',')+' % <div class="bar"><span style="width:'+(100*v)+'%"></span></div></div>';});html+='</article>';});
  $('species').innerHTML=html;$('explain').textContent='Résolution par dichotomie du bilan d’électroneutralité. Les concentrations des formes acido-basiques sont calculées à partir des fractions de distribution de chaque famille.';
 }
 function setMode(m){mode=m;$('tabPoly').classList.toggle('active',m==='poly');$('tabMix').classList.toggle('active',m==='mix');$('modeHelp').textContent=m==='poly'?'Un seul système polyacide HₙA, avec plusieurs dissociations successives.':'Plusieurs couples monoprotés indépendants, chacun avec sa concentration et son degré de neutralisation.';renderControls();calculate();}
