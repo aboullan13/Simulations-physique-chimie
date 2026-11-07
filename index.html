@@ -21,6 +21,19 @@ h2{font-size:1.15rem;margin:0 0 14px}.control{margin:16px 0}.control label{displ
 <body>
 <header><div class="wrap"><h1>Physique-Chimie BCPST</h1><p>Des cours détaillés, des démonstrations et des simulations pour apprendre et s'entraîner.</p><nav class="site-nav"><a href="#accueil">Accueil</a><a href="#physique">Physique</a><a href="#chimie">Chimie</a><a href="#simulateur">Simulations</a><a href="#exercices">Exercices</a></nav></div></header>
 <main>
+<section class="panel intro" id="accueil">
+<h2>Bienvenue sur la plateforme Physique-Chimie BCPST</h2>
+<p>Cette plateforme rassemble progressivement des ressources accessibles à tous les étudiants de BCPST : cours détaillés, démonstrations, simulations interactives et exercices corrigés.</p>
+<div class="intro-grid">
+<a class="intro-card" href="#physique"><strong>Physique</strong><span>Mécanique, thermodynamique, électricité, optique…</span></a>
+<a class="intro-card" href="#chimie"><strong>Chimie</strong><span>Structure de la matière, solutions, équilibres, réactions…</span></a>
+<a class="intro-card" href="#simulateur"><strong>Simulations</strong><span>Manipuler les paramètres et visualiser les phénomènes.</span></a>
+<a class="intro-card" href="#exercices"><strong>Exercices</strong><span>S'entraîner avec des applications et des corrections.</span></a>
+</div>
+</section>
+<section class="panel" id="physique"><h2>Physique</h2><p class="hint">Les cours, démonstrations et activités de physique seront ajoutés progressivement.</p></section>
+<section class="panel" id="chimie" style="margin-top:14px"><h2>Chimie</h2><p class="hint">Les cours, méthodes et activités de chimie seront ajoutés progressivement. Le premier chapitre développé portera sur les solutions aqueuses et les titrages acido-basiques.</p></section>
+<h2 class="section-title" id="simulateur">Première simulation : titrage acido-basique</h2>
 <div class="layout">
 <section class="panel">
 <h2>Paramètres expérimentaux</h2>
@@ -48,7 +61,9 @@ h2{font-size:1.15rem;margin:0 0 14px}.control{margin:16px 0}.control label{displ
 <div class="note" id="explain">Le modèle tient compte des équilibres HA/A⁻ et de l'autoprotolyse de l'eau. La courbe est calculée à partir du bilan de matière et de l'électroneutralité.</div>
 </section>
 </div>
-<section class="panel" style="margin-top:18px">
+<section class="panel" id="exercices" style="margin-top:18px">
+<h2>Exercices et ressources</h2>
+<p class="hint">Les exercices corrigés et les fiches de méthode seront ajoutés au fil du développement de la plateforme.</p>
 <h2>Comprendre le modèle</h2>
 <p class="equation">HA + H₂O ⇌ A⁻ + H₃O⁺ &nbsp;&nbsp; ; &nbsp;&nbsp; Kₐ = [H₃O⁺][A⁻]/[HA]</p>
 <p>À chaque volume versé, le pH est obtenu par résolution numérique de l'électroneutralité, avec la dilution et la quantité de sodium apportée par la soude. À la demi-équivalence, on retrouve pH = pKa dans l'approximation usuelle du titrage d'un acide faible par une base forte.</p>
